@@ -24,6 +24,16 @@ enablePlugins(AwsLambdaPlugin)
 
 Usage
 -------------
+
+`sbt configureLambda` Creates a new AWS Lambda if it doesn't exist yet, or updates the Lambda configuration, if it has changed.
+
+`sbt deployLambda` Packages and deploys the current project to an existing AWS Lambda.
+
+Deprecated Usage
+-------------
+
+The plugin also has the following deprecated tasks:
+
 `sbt createLambda` creates a new AWS Lambda function from the current project.
 
 `sbt updateLambda` updates an existing AWS Lambda function with the current project.
@@ -34,18 +44,21 @@ Configuration
 
 sbt-aws-lambda can be configured using sbt settings, environment variables or by reading user input at deploy time
 
-| sbt setting   |      Environment variable      |  Description |
-|:----------|:-------------:|:------|
+| sbt setting   | Environment variable      |  Description |
+|:----------|:----------|:---------------|
 | s3Bucket |  AWS_LAMBDA_BUCKET_ID | The name of an S3 bucket where the lambda code will be stored |
 | s3KeyPrefix | AWS_LAMBDA_S3_KEY_PREFIX | The prefix to the S3 key where the jar will be uploaded |
 | lambdaName |    AWS_LAMBDA_NAME   |   The name to use for this AWS Lambda function. Defaults to the project name |
 | handlerName | AWS_LAMBDA_HANDLER_NAME |    Java class name and method to be executed, e.g. `com.gilt.example.Lambda::myMethod` |
 | roleArn | AWS_LAMBDA_IAM_ROLE_ARN |The [ARN](http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html "AWS ARN documentation") of an [IAM](https://aws.amazon.com/iam/ "AWS IAM documentation") role to use when creating a new Lambda |
 | region |  AWS_REGION | The name of the AWS region to connect to. Defaults to `us-east-1` |
-| awsLambdaTimeout |            | The Lambda timeout in seconds (1-300). Defaults to AWS default. |
-| awsLambdaMemory |             | The amount of memory in MB for the Lambda function (128-1536, multiple of 64). Defaults to AWS default. |
+| awsLambdaTimeout | AWS_LAMBDA_TIMEOUT | The Lambda timeout in seconds (1-300). Defaults to AWS default. |
+| awsLambdaMemory | AWS_LAMBDA_MEMORY | The amount of memory in MB for the Lambda function (128-1536, multiple of 64). Defaults to AWS default. |
 | lambdaHandlers |              | Sequence of Lambda names to handler functions (for multiple lambda methods per project). Overrides `lambdaName` and `handlerName` if present. | 
-| deployMethod |                | The preferred method for uploading the jar, either `S3` for uploading to AWS S3 or `DIRECT` for direct upload to AWS Lambda |
+| deployMethod | AWS_LAMBDA_DEPLOY_METHOD | The preferred method for uploading the jar, either `S3` for uploading to AWS S3 or `DIRECT` for direct upload to AWS Lambda |
+| deadLetterArn | AWS_LAMBDA_DEAD_LETTER_ARN | The [ARN](http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html "AWS ARN documentation") of the Lambda function's dead letter SQS queue or SNS topic, to receive unprocessed messages |
+| vpcConfigSubnetIds | AWS_LAMBDA_VPC_CONFIG_SUBNET_IDS | Comma separated list of subnet IDs for the VPC |
+| vpcConfigSecurityGroupIds | AWS_LAMBDA_VPC_CONFIG_SECURITY_GROUP_IDS | Comma separated list of security group IDs for the VPC |
 | environment  |                | Seq[(String, String)] of environment variables to set in the lambda function |
 
 An example configuration might look like this:

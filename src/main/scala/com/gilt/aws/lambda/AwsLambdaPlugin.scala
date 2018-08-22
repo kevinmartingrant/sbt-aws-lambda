@@ -10,9 +10,10 @@ import scala.util.{Failure, Success}
 object AwsLambdaPlugin extends AutoPlugin {
 
   object autoImport {
-    val createLambda = taskKey[Map[String, LambdaARN]]("Create a new AWS Lambda function from the current project")
-    val updateLambda = taskKey[Map[String, LambdaARN]]("Package and deploy the current project to an existing AWS Lambda")
-    val configureLambda = taskKey[Map[String, LambdaARN]]("Update the function configuration of an existing AWS Lambda")
+    val configureLambda = taskKey[Map[String, LambdaARN]]("Creates a new AWS Lambda if it doesn't exist, or updates it if the configuration has changed.")
+    val deployLambda = taskKey[Map[String, LambdaARN]]("Packages and deploys the current project to an existing AWS Lambda")
+    val createLambda = taskKey[Map[String, LambdaARN]]("[Deprecated] Create a new AWS Lambda function from the current project. Use configureLambda instead.")
+    val updateLambda = taskKey[Map[String, LambdaARN]]("[Deprecated] Packages and deploys the current project to an existing AWS Lambda. Use deployLambda instead.")
 
     val s3Bucket = settingKey[Option[String]]("ID of the S3 bucket where the jar will be uploaded")
     val s3KeyPrefix = settingKey[String]("The prefix to the S3 key where the jar will be uploaded")
@@ -35,16 +36,6 @@ object AwsLambdaPlugin extends AutoPlugin {
   override def requires = sbtassembly.AssemblyPlugin
 
   override lazy val projectSettings = Seq(
-    updateLambda := doUpdateLambda(
-      deployMethod = deployMethod.value,
-      region = region.value,
-      jar = sbtassembly.AssemblyKeys.assembly.value,
-      s3Bucket = s3Bucket.value,
-      s3KeyPrefix = s3KeyPrefix.?.value,
-      lambdaName = lambdaName.value,
-      handlerName = handlerName.value,
-      lambdaHandlers = lambdaHandlers.value
-    ),
     configureLambda := doConfigureLambda(
       lambdaName = lambdaName.value,
       region = region.value,
@@ -57,6 +48,16 @@ object AwsLambdaPlugin extends AutoPlugin {
       vpcConfigSubnetIds = vpcConfigSubnetIds.value,
       vpcConfigSecurityGroupIds = vpcConfigSecurityGroupIds.value,
       environment = environment.value
+    ),
+    deployLambda := doDeployLambda(
+      deployMethod = deployMethod.value,
+      region = region.value,
+      jar = sbtassembly.AssemblyKeys.assembly.value,
+      s3Bucket = s3Bucket.value,
+      s3KeyPrefix = s3KeyPrefix.?.value,
+      lambdaName = lambdaName.value,
+      handlerName = handlerName.value,
+      lambdaHandlers = lambdaHandlers.value
     ),
     createLambda := doCreateLambda(
       deployMethod = deployMethod.value,
@@ -75,6 +76,16 @@ object AwsLambdaPlugin extends AutoPlugin {
       vpcConfigSecurityGroupIds = vpcConfigSecurityGroupIds.value,
       environment = environment.value
     ),
+    updateLambda := doDeployLambda(
+      deployMethod = deployMethod.value,
+      region = region.value,
+      jar = sbtassembly.AssemblyKeys.assembly.value,
+      s3Bucket = s3Bucket.value,
+      s3KeyPrefix = s3KeyPrefix.?.value,
+      lambdaName = lambdaName.value,
+      handlerName = handlerName.value,
+      lambdaHandlers = lambdaHandlers.value
+    ),
     s3Bucket := None,
     lambdaName := Some(sbt.Keys.name.value),
     handlerName := None,
@@ -90,7 +101,7 @@ object AwsLambdaPlugin extends AutoPlugin {
     environment := Nil
   )
 
-  private def doUpdateLambda(deployMethod: Option[String], region: Option[String], jar: File, s3Bucket: Option[String], s3KeyPrefix: Option[String],
+  private def doDeployLambda(deployMethod: Option[String], region: Option[String], jar: File, s3Bucket: Option[String], s3KeyPrefix: Option[String],
                              lambdaName: Option[String], handlerName: Option[String], lambdaHandlers: Seq[(String, String)]): Map[String, LambdaARN] = {
     val resolvedDeployMethod = resolveDeployMethod(deployMethod)
     val resolvedRegion = resolveRegion(region)
