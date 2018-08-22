@@ -6,8 +6,6 @@ organization := "com.gilt.sbt"
 
 enablePlugins(SbtPlugin)
 
-version in ThisBuild := "git describe --tags --always --dirty".!!.trim.replaceFirst("^v", "")
-
 libraryDependencies += {
   val sbtV     = (sbtBinaryVersion in pluginCrossBuild).value
   val scalaV   = (scalaBinaryVersion in update).value
