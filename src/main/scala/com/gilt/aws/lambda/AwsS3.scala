@@ -1,20 +1,20 @@
 package com.gilt.aws.lambda
 
-import com.amazonaws.{AmazonServiceException, AmazonClientException}
-import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.{AmazonClientException, AmazonServiceException}
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.{Bucket, CannedAccessControlList, PutObjectRequest}
 import sbt._
 
-import scala.util.{Try, Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 private[lambda] object AwsS3 {
-  private lazy val client = new AmazonS3Client(AwsCredentials.provider)
+  private lazy val client = AmazonS3ClientBuilder.standard().withCredentials(AwsCredentials.provider).build()
 
   def pushJarToS3(jar: File, bucketId: S3BucketId, s3KeyPrefix: String): Try[S3Key] = {
     try{
       val key = s3KeyPrefix + jar.getName
       val objectRequest = new PutObjectRequest(bucketId.value, key, jar)
-      objectRequest.setCannedAcl(CannedAccessControlList.AuthenticatedRead)
+        .withCannedAcl(CannedAccessControlList.AuthenticatedRead)
 
       client.putObject(objectRequest)
 

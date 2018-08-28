@@ -3,9 +3,8 @@ package com.gilt.aws.lambda
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 
-import com.amazonaws.regions.RegionUtils
 import com.amazonaws.{AmazonClientException, AmazonServiceException}
-import com.amazonaws.services.lambda.{AWSLambdaClient, AWSLambdaClientBuilder}
+import com.amazonaws.services.lambda.AWSLambdaClientBuilder
 import com.amazonaws.services.lambda.model._
 import sbt._
 
@@ -16,8 +15,10 @@ private[lambda] object AwsLambda {
   def updateLambdaWithFunctionCodeRequest(region: Region,
                                           updateFunctionCodeRequest: UpdateFunctionCodeRequest): Try[UpdateFunctionCodeResult] = {
     try {
-      val client = new AWSLambdaClient(AwsCredentials.provider)
-      client.setRegion(RegionUtils.getRegion(region.value))
+      val client = AWSLambdaClientBuilder.standard()
+        .withCredentials(AwsCredentials.provider)
+        .withRegion(region.value)
+        .build
 
       val updateResult = client.updateFunctionCode(updateFunctionCodeRequest)
 
@@ -76,26 +77,6 @@ private[lambda] object AwsLambda {
     updateResult
   }
 
-  def createUpdateFunctionCodeRequestFromS3(resolvedBucketId: S3BucketId, s3Key: S3Key,
-                                            resolvedLambdaName: LambdaName): UpdateFunctionCodeRequest = {
-    val updateFunctionCodeRequest = {
-      val r = new UpdateFunctionCodeRequest()
-      r.setFunctionName(resolvedLambdaName.value)
-      r.setS3Bucket(resolvedBucketId.value)
-      r.setS3Key(s3Key.value)
-      r
-    }
-    updateFunctionCodeRequest
-  }
-
-  def createUpdateFunctionCodeRequestFromJar(jar: File, resolvedLambdaName: LambdaName): UpdateFunctionCodeRequest = {
-    val r = new UpdateFunctionCodeRequest()
-    r.setFunctionName(resolvedLambdaName.value)
-    val buffer = getJarBuffer(jar)
-    r.setZipFile(buffer)
-    r
-  }
-
   def createLambda(region: Region,
                    functionName: LambdaName,
                    handlerName: HandlerName,
@@ -108,25 +89,19 @@ private[lambda] object AwsLambda {
                    environment: Environment
                     ): Try[CreateFunctionResult] = {
     try {
-      val client = new AWSLambdaClient(AwsCredentials.provider)
-      client.setRegion(RegionUtils.getRegion(region.value))
+      val client = AWSLambdaClientBuilder.standard().withCredentials(AwsCredentials.provider).withRegion(region.value).build()
 
-      val request = {
-        val r = new CreateFunctionRequest()
-        r.setFunctionName(functionName.value)
-        r.setHandler(handlerName.value)
-        r.setRole(roleName.value)
-        r.setRuntime(com.amazonaws.services.lambda.model.Runtime.Java8)
-        r.setEnvironment(environment)
-        if(timeout.isDefined) r.setTimeout(timeout.get.value)
-        if(memory.isDefined)  r.setMemorySize(memory.get.value)
-        if(vpcConfig.isDefined) r.setVpcConfig(vpcConfig.get)
-        if(deadLetterName.isDefined)
-          r.setDeadLetterConfig(new DeadLetterConfig().withTargetArn(deadLetterName.get.value))
-        functionCode.foreach(r.setCode)
-
-        r
-      }
+      var request = new CreateFunctionRequest()
+        .withFunctionName(functionName.value)
+        .withHandler(handlerName.value)
+        .withRole(roleName.value)
+        .withRuntime(com.amazonaws.services.lambda.model.Runtime.Java8)
+        .withEnvironment(environment)
+      request = timeout.fold(request)(t => request.withTimeout(t.value))
+      request = memory.fold(request)(m => request.withMemorySize(m.value))
+      request = vpcConfig.fold(request)(request.withVpcConfig)
+      request = deadLetterName.fold(request)(n => request.withDeadLetterConfig(new DeadLetterConfig().withTargetArn(n.value)))
+      request = functionCode.fold(request)(request.withCode)
 
       val createResult = client.createFunction(request)
 
@@ -138,20 +113,6 @@ private[lambda] object AwsLambda {
                _: AmazonServiceException) =>
         Failure(ex)
     }
-  }
-
-  def createFunctionCodeFromS3(jar: File, resolvedBucketId: S3BucketId): FunctionCode = {
-    val c = new FunctionCode
-    c.setS3Bucket(resolvedBucketId.value)
-    c.setS3Key(jar.getName)
-    c
-  }
-
-  def createFunctionCodeFromJar(jar: File): FunctionCode = {
-    val c = new FunctionCode
-    val buffer = getJarBuffer(jar)
-    c.setZipFile(buffer)
-    c
   }
 
   def getJarBuffer(jar: File): ByteBuffer = {
