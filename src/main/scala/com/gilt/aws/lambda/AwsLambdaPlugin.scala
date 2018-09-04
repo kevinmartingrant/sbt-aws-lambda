@@ -2,6 +2,7 @@ package com.gilt.aws.lambda
 
 import scala.util.{Failure, Success}
 import com.amazonaws.services.lambda.model.{Environment, FunctionCode, UpdateFunctionCodeRequest, VpcConfig}
+import sbt.Keys._
 import sbt._
 
 object AwsLambdaPlugin extends AutoPlugin {
@@ -54,7 +55,8 @@ object AwsLambdaPlugin extends AutoPlugin {
       s3KeyPrefix = s3KeyPrefix.?.value,
       lambdaName = lambdaName.value,
       handlerName = handlerName.value,
-      lambdaHandlers = lambdaHandlers.value
+      lambdaHandlers = lambdaHandlers.value,
+      version = version.value
     ),
     createLambda := doCreateLambda(
       deployMethod = deployMethod.value,
@@ -81,7 +83,8 @@ object AwsLambdaPlugin extends AutoPlugin {
       s3KeyPrefix = s3KeyPrefix.?.value,
       lambdaName = lambdaName.value,
       handlerName = handlerName.value,
-      lambdaHandlers = lambdaHandlers.value
+      lambdaHandlers = lambdaHandlers.value,
+      version = version.value
     ),
     s3Bucket := None,
     lambdaName := Some(sbt.Keys.name.value),
@@ -99,7 +102,7 @@ object AwsLambdaPlugin extends AutoPlugin {
   )
 
   private def doDeployLambda(deployMethod: Option[String], region: Option[String], jar: File, s3Bucket: Option[String], s3KeyPrefix: Option[String],
-                             lambdaName: Option[String], handlerName: Option[String], lambdaHandlers: Seq[(String, String)]): Map[String, LambdaARN] = {
+                             lambdaName: Option[String], handlerName: Option[String], lambdaHandlers: Seq[(String, String)], version: String): Map[String, LambdaARN] = {
     val resolvedDeployMethod = resolveDeployMethod(deployMethod)
     val resolvedRegion = resolveRegion(region)
     val resolvedLambdaHandlers = resolveLambdaHandlers(lambdaName, handlerName, lambdaHandlers)
@@ -115,7 +118,7 @@ object AwsLambdaPlugin extends AutoPlugin {
             .withS3Bucket(resolvedBucketId.value)
             .withS3Key(s3Key.value)
 
-          updateFunctionCode(resolvedRegion, resolvedLambdaName, updateFunctionCodeRequest)
+          updateFunctionCode(resolvedRegion, resolvedLambdaName, updateFunctionCodeRequest, version)
         }).toMap
         case Failure(exception) =>
           sys.error(s"Error uploading jar to S3 lambda: ${formatException(exception)}")
@@ -126,15 +129,16 @@ object AwsLambdaPlugin extends AutoPlugin {
           .withFunctionName(resolvedLambdaName.value)
           .withZipFile(AwsLambda.getJarBuffer(jar))
 
-        updateFunctionCode(resolvedRegion, resolvedLambdaName, updateFunctionCodeRequest)
+        updateFunctionCode(resolvedRegion, resolvedLambdaName, updateFunctionCodeRequest, version)
       }).toMap
     } else
       sys.error(s"Unsupported deploy method: ${resolvedDeployMethod.value}")
   }
 
-  def updateFunctionCode(resolvedRegion: Region, resolvedLambdaName: LambdaName, updateFunctionCodeRequest: UpdateFunctionCodeRequest): (String, LambdaARN) = {
+  def updateFunctionCode(resolvedRegion: Region, resolvedLambdaName: LambdaName, updateFunctionCodeRequest: UpdateFunctionCodeRequest, version: String): (String, LambdaARN) = {
     AwsLambda.updateLambdaWithFunctionCodeRequest(resolvedRegion, updateFunctionCodeRequest) match {
       case Success(updateFunctionCodeResult) =>
+        AwsLambda.tagLambda(resolvedRegion, updateFunctionCodeResult.getFunctionArn, version)
         resolvedLambdaName.value -> LambdaARN(updateFunctionCodeResult.getFunctionArn)
       case Failure(exception) =>
         sys.error(s"Error updating lambda: ${formatException(exception)}")

@@ -32,6 +32,17 @@ private[lambda] object AwsLambda {
     }
   }
 
+  def tagLambda(region: Region, functionArn: String, version: String) = {
+    val client = AWSLambdaClientBuilder.standard()
+      .withCredentials(AwsCredentials.provider)
+      .withRegion(region.value)
+      .build
+
+    import scala.collection.JavaConverters._
+    val tagResourceReq = new TagResourceRequest().withResource(functionArn).withTags(Map("code.version" -> version).asJava)
+    client.tagResource(tagResourceReq)
+  }
+
   def getLambdaConfig(region: Region,
                       functionName: LambdaName): Try[Option[GetFunctionConfigurationResult]] = Try {
     val request = new GetFunctionConfigurationRequest().withFunctionName(functionName.value)
