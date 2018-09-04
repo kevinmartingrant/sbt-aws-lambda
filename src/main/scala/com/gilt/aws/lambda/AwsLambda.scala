@@ -2,6 +2,7 @@ package com.gilt.aws.lambda
 
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
+import java.time.Instant
 
 import com.amazonaws.{AmazonClientException, AmazonServiceException}
 import com.amazonaws.services.lambda.AWSLambdaClientBuilder
@@ -39,7 +40,7 @@ private[lambda] object AwsLambda {
       .build
 
     import scala.collection.JavaConverters._
-    val tagResourceReq = new TagResourceRequest().withResource(functionArn).withTags(Map("code.version" -> version).asJava)
+    val tagResourceReq = new TagResourceRequest().withResource(functionArn).withTags(Map("deploy.code.version" -> version, "deploy.timestamp" -> Instant.now.toString).asJava)
     client.tagResource(tagResourceReq)
   }
 
