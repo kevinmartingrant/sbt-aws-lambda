@@ -1,5 +1,7 @@
 package com.gilt.aws.lambda
 
+import java.util.{Collections, Map => JMap}
+import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
 import com.amazonaws.services.lambda.model.{Environment, FunctionCode, UpdateFunctionCodeRequest, VpcConfig}
 import sbt.Keys._
@@ -45,7 +47,7 @@ object AwsLambdaPlugin extends AutoPlugin {
       deadLetterArn = deadLetterArn.value,
       vpcConfigSubnetIds = vpcConfigSubnetIds.value,
       vpcConfigSecurityGroupIds = vpcConfigSecurityGroupIds.value,
-      environment = environment.value
+      environment = environment.value.toMap
     ),
     deployLambda := doDeployLambda(
       deployMethod = deployMethod.value,
@@ -145,8 +147,17 @@ object AwsLambdaPlugin extends AutoPlugin {
     }
   }
 
+  def computeEnvironment(current_ : JMap[String, String], desired: Map[String, String]): (Boolean, Environment) = {
+    val current = Option(current_).fold(Map.empty[String, String])(_.asScala.toMap)
+
+    // We want to keep env vars that are set in the lambda but missing in the settings, as they may have been added manually (eg. encrypted env vars)
+    val currentWithoutUnlisted = current -- (current.keySet -- desired.keySet)
+    val needsUpdate = currentWithoutUnlisted != desired
+    needsUpdate -> new Environment().withVariables((current ++ desired).asJava)
+  }
+
   private def doConfigureLambda(lambdaName: Option[String], region: Option[String],
-                                handlerName: Option[String], lambdaHandlers: Seq[(String, String)], roleArn: Option[String], timeout: Option[Int], memory: Option[Int], deadLetterArn: Option[String], vpcConfigSubnetIds: Option[String], vpcConfigSecurityGroupIds: Option[String], environment: Seq[(String, String)]): Map[String, LambdaARN] = {
+                                handlerName: Option[String], lambdaHandlers: Seq[(String, String)], roleArn: Option[String], timeout: Option[Int], memory: Option[Int], deadLetterArn: Option[String], vpcConfigSubnetIds: Option[String], vpcConfigSecurityGroupIds: Option[String], environment: Map[String, String]): Map[String, LambdaARN] = {
     val resolvedLambdaHandlers = resolveLambdaHandlers(lambdaName, handlerName, lambdaHandlers)
     val resolvedRegion = resolveRegion(region)
     val resolvedRoleName = resolveRoleARN(roleArn)
@@ -160,18 +171,18 @@ object AwsLambdaPlugin extends AutoPlugin {
       val config_ = resolvedVpcConfigSubnetIds.map(ids => new VpcConfig().withSubnetIds(ids.value.split(",") :_*))
       resolvedVpcConfigSecurityGroupIds.fold(config_)(ids => Some(config_.getOrElse(new VpcConfig()).withSecurityGroupIds(ids.value.split(",") :_*)))
     }
-    val resolvedEnvironment = resolveEnvironment(environment)
     for ((resolvedLambdaName, resolvedHandlerName) <- resolvedLambdaHandlers) yield {
       AwsLambda.getLambdaConfig(resolvedRegion, resolvedLambdaName).flatMap { configOpt =>
         configOpt.fold {
           println(s"Creating new lambda: ${resolvedLambdaName.value}")
+          val (_, resolvedEnvironment) = computeEnvironment(Collections.emptyMap(), environment)
           AwsLambda.createLambda(resolvedRegion, resolvedLambdaName, resolvedHandlerName, resolvedRoleName, resolvedTimeout, resolvedMemory, resolvedDeadLetterArn, resolvedVpcConfig, None, resolvedEnvironment).map(_.getFunctionArn)
         }{ currentConfig =>
+          val (envUpdated, resolvedEnvironment) = computeEnvironment(currentConfig.getEnvironment.getVariables, environment)
           if (currentConfig.getHandler != resolvedHandlerName.value ||
               currentConfig.getRole != resolvedRoleName.value ||
               currentConfig.getRuntime != com.amazonaws.services.lambda.model.Runtime.Java8.toString ||
-              (currentConfig.getEnvironment == null && resolvedEnvironment.getVariables.size > 0) ||
-              (currentConfig.getEnvironment != null && currentConfig.getEnvironment.getVariables != resolvedEnvironment.getVariables) ||
+              envUpdated ||
               resolvedTimeout.exists(t => Integer.valueOf(t.value) != currentConfig.getTimeout) ||
               resolvedMemory.exists(m => Integer.valueOf(m.value) != currentConfig.getMemorySize) ||
               resolvedVpcConfig.exists(vpn => currentConfig.getVpcConfig == null || vpn.getSecurityGroupIds != currentConfig.getVpcConfig.getSecurityGroupIds || vpn.getSubnetIds != currentConfig.getVpcConfig.getSubnetIds)
