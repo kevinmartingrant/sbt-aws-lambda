@@ -110,10 +110,10 @@ object AwsLambdaPlugin extends AutoPlugin {
     val resolvedLambdaHandlers = resolveLambdaHandlers(lambdaName, handlerName, lambdaHandlers)
 
     if (resolvedDeployMethod.value == "S3") {
-      val resolvedBucketId = resolveBucketId(s3Bucket)
+      val resolvedBucketId = resolveBucketId(resolvedRegion, s3Bucket)
       val resolvedS3KeyPrefix = resolveS3KeyPrefix(s3KeyPrefix)
 
-      AwsS3.pushJarToS3(jar, resolvedBucketId, resolvedS3KeyPrefix) match {
+      AwsS3.pushJarToS3(resolvedRegion, jar, resolvedBucketId, resolvedS3KeyPrefix) match {
         case Success(s3Key) => (for (resolvedLambdaName <- resolvedLambdaHandlers.keys) yield {
           val updateFunctionCodeRequest = new UpdateFunctionCodeRequest()
             .withFunctionName(resolvedLambdaName.value)
@@ -223,9 +223,9 @@ object AwsLambdaPlugin extends AutoPlugin {
     val resolvedEnvironment = resolveEnvironment(environment)
 
     if (resolvedDeployMethod.value == "S3") {
-      val resolvedBucketId = resolveBucketId(s3Bucket)
+      val resolvedBucketId = resolveBucketId(resolvedRegion, s3Bucket)
       val resolvedS3KeyPrefix = resolveS3KeyPrefix(s3KeyPrefix)
-      AwsS3.pushJarToS3(jar, resolvedBucketId, resolvedS3KeyPrefix) match {
+      AwsS3.pushJarToS3(resolvedRegion, jar, resolvedBucketId, resolvedS3KeyPrefix) match {
         case Success(_) =>
           for ((resolvedLambdaName, resolvedHandlerName) <- resolvedLambdaHandlers) yield {
             val functionCode = new FunctionCode().withS3Bucket(resolvedBucketId.value).withS3Key(jar.getName)
@@ -263,8 +263,8 @@ object AwsLambdaPlugin extends AutoPlugin {
   private def resolveDeployMethod(sbtSettingValueOpt: Option[String]): DeployMethod =
     sbtSettingValueOpt orElse sys.env.get(EnvironmentVariables.deployMethod) map DeployMethod getOrElse promptUserForDeployMethod()
 
-  private def resolveBucketId(sbtSettingValueOpt: Option[String]): S3BucketId =
-    sbtSettingValueOpt orElse sys.env.get(EnvironmentVariables.bucketId) map S3BucketId getOrElse promptUserForS3BucketId()
+  private def resolveBucketId(region: Region, sbtSettingValueOpt: Option[String]): S3BucketId =
+    sbtSettingValueOpt orElse sys.env.get(EnvironmentVariables.bucketId) map S3BucketId getOrElse promptUserForS3BucketId(region)
 
   private def resolveS3KeyPrefix(sbtSettingValueOpt: Option[String]): String =
     sbtSettingValueOpt orElse sys.env.get(EnvironmentVariables.s3KeyPrefix) getOrElse ""
@@ -315,23 +315,23 @@ object AwsLambdaPlugin extends AutoPlugin {
     DeployMethod(inputValue)
   }
 
-  private def promptUserForS3BucketId(): S3BucketId = {
+  private def promptUserForS3BucketId(resolvedRegion: Region): S3BucketId = {
     val inputValue = readInput(s"Enter the AWS S3 bucket where the lambda jar will be stored. (You also could have set the environment variable: ${EnvironmentVariables.bucketId} or the sbt setting: s3Bucket)")
     val bucketId = S3BucketId(inputValue)
 
-    AwsS3.getBucket(bucketId) map (_ => bucketId) getOrElse {
+    AwsS3.getBucket(resolvedRegion, bucketId) map (_ => bucketId) getOrElse {
       val createBucket = readInput(s"Bucket $inputValue does not exist. Create it now? (y/n)")
 
       if(createBucket == "y") {
-        AwsS3.createBucket(bucketId) match {
+        AwsS3.createBucket(resolvedRegion, bucketId) match {
           case Success(createdBucketId) =>
             createdBucketId
           case Failure(th) =>
             println(s"Failed to create S3 bucket: ${th.getLocalizedMessage}")
-            promptUserForS3BucketId()
+            promptUserForS3BucketId(resolvedRegion)
         }
       }
-      else promptUserForS3BucketId()
+      else promptUserForS3BucketId(resolvedRegion)
     }
   }
 
