@@ -97,9 +97,9 @@ private[lambda] object AwsLambda {
                    memory: Option[Memory],
                    deadLetterName: Option[DeadLetterARN],
                    vpcConfig: Option[VpcConfig],
-                   functionCode: Option[FunctionCode],
+                   functionCode: FunctionCode,
                    environment: Environment
-                    ): Try[CreateFunctionResult] = {
+                  ): Try[CreateFunctionResult] = {
     try {
       val client = AWSLambdaClientBuilder.standard().withCredentials(AwsCredentials.provider).withRegion(region.value).build()
 
@@ -109,11 +109,11 @@ private[lambda] object AwsLambda {
         .withRole(roleName.value)
         .withRuntime(com.amazonaws.services.lambda.model.Runtime.Java8)
         .withEnvironment(environment)
+        .withCode(functionCode)
       request = timeout.fold(request)(t => request.withTimeout(t.value))
       request = memory.fold(request)(m => request.withMemorySize(m.value))
       request = vpcConfig.fold(request)(request.withVpcConfig)
       request = deadLetterName.fold(request)(n => request.withDeadLetterConfig(new DeadLetterConfig().withTargetArn(n.value)))
-      request = functionCode.fold(request)(request.withCode)
 
       val createResult = client.createFunction(request)
 
