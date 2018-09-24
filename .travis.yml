@@ -5,4 +5,4 @@ script:
   - sbt "^ test"
 jdk:
   - oraclejdk8
-  - oraclejdk10
+  - openjdk11
