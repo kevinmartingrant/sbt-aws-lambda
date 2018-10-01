@@ -28,3 +28,7 @@ crossSbtVersions := List("0.13.17", "1.2.3")
 releaseCrossBuild := true
 
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
+// Testing
+libraryDependencies += "com.lihaoyi" %% "utest" % "0.6.5" % "test"
+testFrameworks += new TestFramework("utest.runner.Framework")
