@@ -1,6 +1,5 @@
 package com.gilt.aws.lambda
 
-import com.amazonaws.services.lambda.model.Environment
 import scala.collection.JavaConverters._
 
 import utest._

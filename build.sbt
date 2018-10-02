@@ -1,5 +1,7 @@
 import scala.sys.process._
 
+scalaVersion := "2.12.6"
+
 name := "sbt-aws-lambda"
 
 organization := "com.gilt.sbt"
