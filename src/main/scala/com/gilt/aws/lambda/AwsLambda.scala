@@ -8,6 +8,7 @@ import scala.util.Try
 private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
 
   def updateLambdaWithFunctionCodeRequest(updateFunctionCodeRequest: UpdateFunctionCodeRequest): Try[UpdateFunctionCodeResult] = {
+    println(s"Updating lambda code ${updateFunctionCodeRequest.getFunctionName}")
     client.updateFunctionCode(updateFunctionCodeRequest)
       .map { result =>
         println(s"Updated lambda code ${result.getFunctionArn}")
