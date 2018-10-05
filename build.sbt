@@ -15,7 +15,7 @@ libraryDependencies += {
   Defaults.sbtPluginExtra(assembly, sbtV, scalaV)
 }
 
-val awsSdkVersion = "1.11.414"
+val awsSdkVersion = "1.11.422"
 
 libraryDependencies ++= Seq(
   "com.amazonaws"  % "aws-java-sdk-iam"    % awsSdkVersion,
