@@ -5,7 +5,7 @@ sbt plugin to deploy code to AWS Lambda
 [![Join the chat at https://gitter.im/gilt/sbt-aws-lambda](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gilt/sbt-aws-lambda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.gilt.sbt/sbt-aws-lambda/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.gilt.sbt/sbt-aws-lambda)
 
 
-This plugin is available for both sbt 1.x and 0.13.x. The latest version 0.6.4 was released on 13/Sep/2018.
+This plugin is available for both sbt 1.x and 0.13.x. The latest version 0.6.5 was released on 05/Oct/2018.
 
 Installation
 ------------
@@ -13,7 +13,7 @@ Installation
 Add the following to your `project/plugins.sbt` file:
 
 ```scala
-addSbtPlugin("com.gilt.sbt" % "sbt-aws-lambda" % "0.6.4")
+addSbtPlugin("com.gilt.sbt" % "sbt-aws-lambda" % "0.6.5")
 ```
 
 Add the `AwsLambdaPlugin` auto-plugin to your build.sbt:
