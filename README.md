@@ -95,6 +95,24 @@ roleArn := Some("arn:aws:iam::123456789000:role/lambda_basic_execution")
 (note that you will need to use a real ARN for your role rather than copying this one).
 
 
+Customizing the packaging step
+------------------------------
+
+By default, sbt-aws-lambda uses [sbt-assembly](https://github.com/sbt/sbt-assembly) to package a fat jar that includes your project and all its dependencies. 
+In some cases you may want to override this and provide a different task that sbt-aws-lambda should call to package the jar. To do this, override the `packageLambda` task key with a different task that produces an package file, 
+like [sbt-native-package](https://github.com/sbt/sbt-native-packager) or the built-in `packageBin` task:
+
+```scala
+// Use sbt-native-packager
+packageLambda := (packageBin in Universal).value
+
+``` 
+```scala
+// Use project jar only
+packageLambda := (packageBin in Compile).value
+
+``` 
+ 
 Publishing new versions of this plugin
 --------------------------------------
 
