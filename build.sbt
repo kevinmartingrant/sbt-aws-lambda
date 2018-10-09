@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
 
 javaVersionPrefix in javaVersionCheck := Some("1.8")
 
-crossSbtVersions := List("0.13.17", "1.2.3")
+crossSbtVersions := List("0.13.17", "1.2.4")
 
 releaseCrossBuild := true
 
