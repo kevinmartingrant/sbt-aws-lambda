@@ -29,6 +29,7 @@ object AwsLambdaPlugin extends AutoPlugin {
     val vpcConfigSubnetIds = settingKey[Option[String]]("Comma separated list of subnet IDs for the VPC")
     val vpcConfigSecurityGroupIds = settingKey[Option[String]]("Comma separated list of security group IDs for the VPC")
     val environment = settingKey[Seq[(String, String)]]("A sequence of environment keys and values")
+    val packageLambda = taskKey[File]("The action to package the lambda jar file")
   }
 
   import autoImport._
@@ -49,14 +50,14 @@ object AwsLambdaPlugin extends AutoPlugin {
       vpcConfigSecurityGroupIds = vpcConfigSecurityGroupIds.value,
       environment = environment.value.toMap,
       deployMethod = deployMethod.value,
-      jar = sbtassembly.AssemblyKeys.assembly.value,
+      jar = packageLambda.value,
       s3Bucket = s3Bucket.value,
       s3KeyPrefix = s3KeyPrefix.?.value
     ),
     deployLambda := doDeployLambda(
       deployMethod = deployMethod.value,
       region = region.value,
-      jar = sbtassembly.AssemblyKeys.assembly.value,
+      jar = packageLambda.value,
       s3Bucket = s3Bucket.value,
       s3KeyPrefix = s3KeyPrefix.?.value,
       lambdaName = lambdaName.value,
@@ -67,7 +68,7 @@ object AwsLambdaPlugin extends AutoPlugin {
     createLambda := doCreateLambda(
       deployMethod = deployMethod.value,
       region = region.value,
-      jar = sbtassembly.AssemblyKeys.assembly.value,
+      jar = packageLambda.value,
       s3Bucket = s3Bucket.value,
       s3KeyPrefix = s3KeyPrefix.?.value,
       lambdaName = lambdaName.value,
@@ -84,7 +85,7 @@ object AwsLambdaPlugin extends AutoPlugin {
     updateLambda := doDeployLambda(
       deployMethod = deployMethod.value,
       region = region.value,
-      jar = sbtassembly.AssemblyKeys.assembly.value,
+      jar = packageLambda.value,
       s3Bucket = s3Bucket.value,
       s3KeyPrefix = s3KeyPrefix.?.value,
       lambdaName = lambdaName.value,
@@ -104,7 +105,8 @@ object AwsLambdaPlugin extends AutoPlugin {
     deadLetterArn := None,
     vpcConfigSubnetIds := None,
     vpcConfigSecurityGroupIds := None,
-    environment := Nil
+    environment := Nil,
+    packageLambda := sbtassembly.AssemblyKeys.assembly.value
   )
 
   private def doDeployLambda(deployMethod: Option[String], region: Option[String], jar: File, s3Bucket: Option[String], s3KeyPrefix: Option[String],
