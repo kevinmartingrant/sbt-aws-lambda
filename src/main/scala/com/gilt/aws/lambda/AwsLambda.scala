@@ -1,17 +1,19 @@
 package com.gilt.aws.lambda
 
 import java.time.Instant
-import com.amazonaws.services.lambda.model._
+
+import software.amazon.awssdk.services.lambda.model._
+// import com.amazonaws.services.lambda.model._
 import scala.collection.JavaConverters._
 import scala.util.Try
 
 private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
 
-  def updateLambdaWithFunctionCodeRequest(updateFunctionCodeRequest: UpdateFunctionCodeRequest): Try[UpdateFunctionCodeResult] = {
-    println(s"Updating lambda code ${updateFunctionCodeRequest.getFunctionName}")
+  def updateLambdaWithFunctionCodeRequest(updateFunctionCodeRequest: UpdateFunctionCodeRequest): Try[UpdateFunctionCodeResponse] = {
+    println(s"Updating lambda code ${updateFunctionCodeRequest.functionName}")
     client.updateFunctionCode(updateFunctionCodeRequest)
       .map { result =>
-        println(s"Updated lambda code ${result.getFunctionArn}")
+        println(s"Updated lambda code ${result.functionArn}")
         result
       }
   }
@@ -29,9 +31,9 @@ private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
     client.tagResource(tagResourceReq)
   }
 
-  def getLambdaConfig(functionName: LambdaName): Try[Option[GetFunctionConfigurationResult]] = {
+  def getLambdaConfig(functionName: LambdaName): Try[Option[GetFunctionConfigurationResponse]] = {
     val request = new GetFunctionConfigurationRequest()
-      .withFunctionName(functionName.value)
+      .functionName(functionName.value)
 
     client.getFunctionConfiguration(request)
       .map(Option.apply)
@@ -47,7 +49,7 @@ private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
                          memory: Option[Memory],
                          deadLetterName: Option[DeadLetterARN],
                          vpcConfig: Option[VpcConfig],
-                         environment: Environment): Try[UpdateFunctionConfigurationResult] = {
+                         environment: Environment): Try[UpdateFunctionConfigurationResponse] = {
 
     var request = new UpdateFunctionConfigurationRequest()
         .withFunctionName(functionName.value)
@@ -76,7 +78,7 @@ private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
                    deadLetterName: Option[DeadLetterARN],
                    vpcConfig: Option[VpcConfig],
                    functionCode: FunctionCode,
-                   environment: Environment): Try[CreateFunctionResult] = {
+                   environment: Environment): Try[CreateFunctionResponse] = {
 
     var request = new CreateFunctionRequest()
       .withFunctionName(functionName.value)
@@ -92,7 +94,7 @@ private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
 
     client.createFunction(request)
       .map { result =>
-        println(s"Created Lambda: ${result.getFunctionArn}")
+        println(s"Created Lambda: ${result.functionArn}")
         result
       }
 

@@ -3,7 +3,7 @@ package com.gilt.aws.lambda
 import java.util.{Collections, Map => JMap}
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
-import com.amazonaws.services.lambda.model.{Environment, FunctionCode, UpdateFunctionCodeRequest, VpcConfig}
+// import com.amazonaws.services.lambda.model.{Environment, FunctionCode, UpdateFunctionCodeRequest, VpcConfig}
 import sbt.Keys._
 import sbt._
 

@@ -15,12 +15,13 @@ libraryDependencies += {
   Defaults.sbtPluginExtra(assembly, sbtV, scalaV)
 }
 
-val awsSdkVersion = "1.11.461"
+val awsSdkVersion = "2.1.3"
 
 libraryDependencies ++= Seq(
-  "com.amazonaws"  % "aws-java-sdk-iam"    % awsSdkVersion,
-  "com.amazonaws"  % "aws-java-sdk-lambda" % awsSdkVersion,
-  "com.amazonaws"  % "aws-java-sdk-s3"     % awsSdkVersion
+  "software.amazon.awssdk"  % "iam"    % awsSdkVersion,
+  "software.amazon.awssdk"  % "lambda" % awsSdkVersion,
+  "software.amazon.awssdk"  % "s3"     % awsSdkVersion,
+  "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
 )
 
 javaVersionPrefix in javaVersionCheck := Some("1.8")
