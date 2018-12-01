@@ -6,7 +6,7 @@ object DomainModelsTests extends TestSuite {
   val tests = Tests {
     "Timeout" - {
       "above 0" - timeoutAbove0
-      "equal, or bellow 300" - timeoutEqualBellow300
+      "equal, or bellow 900" - timeoutEqualBellow900
     }
 
     "Memory" - {
@@ -22,10 +22,10 @@ object DomainModelsTests extends TestSuite {
     Timeout(1)
   }
 
-  def timeoutEqualBellow300 = {
-    Timeout(299)
-    Timeout(300)
-    intercept[IllegalArgumentException]{ Timeout(301) }
+  def timeoutEqualBellow900 = {
+    Timeout(899)
+    Timeout(900)
+    intercept[IllegalArgumentException]{ Timeout(901) }
   }
 
   def memoryDividable64 = {

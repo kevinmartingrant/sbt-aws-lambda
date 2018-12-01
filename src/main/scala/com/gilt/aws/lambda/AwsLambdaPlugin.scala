@@ -21,7 +21,7 @@ object AwsLambdaPlugin extends AutoPlugin {
     val handlerName = settingKey[Option[String]]("Name of the handler to be executed by AWS Lambda")
     val roleArn = settingKey[Option[String]]("ARN of the IAM role for the Lambda function")
     val region = settingKey[Option[String]]("Name of the AWS region to connect to")
-    val awsLambdaTimeout = settingKey[Option[Int]]("The Lambda timeout length in seconds (1-300)")
+    val awsLambdaTimeout = settingKey[Option[Int]]("The Lambda timeout length in seconds (1-900)")
     val awsLambdaMemory = settingKey[Option[Int]]("The amount of memory in MB for the Lambda function (128-1536, multiple of 64)")
     val lambdaHandlers = settingKey[Seq[(String, String)]]("A sequence of pairs of Lambda function names to handlers (for multiple handlers in one jar)")
     val deployMethod = settingKey[Option[String]]("S3 for using an S3 bucket to upload the jar or DIRECT for directly uploading a jar file.")
