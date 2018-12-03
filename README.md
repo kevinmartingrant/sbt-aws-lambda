@@ -54,7 +54,7 @@ sbt-aws-lambda can be configured using sbt settings, environment variables or by
 | handlerName | AWS_LAMBDA_HANDLER_NAME |    Java class name and method to be executed, e.g. `com.gilt.example.Lambda::myMethod` |
 | roleArn | AWS_LAMBDA_IAM_ROLE_ARN |The [ARN](http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html "AWS ARN documentation") of an [IAM](https://aws.amazon.com/iam/ "AWS IAM documentation") role to use when creating a new Lambda |
 | region |  AWS_REGION | The name of the AWS region to connect to. Defaults to `us-east-1` |
-| awsLambdaTimeout | AWS_LAMBDA_TIMEOUT | The Lambda timeout in seconds (1-300). Defaults to AWS default. |
+| awsLambdaTimeout | AWS_LAMBDA_TIMEOUT | The Lambda timeout in seconds (1-900). Defaults to AWS default. |
 | awsLambdaMemory | AWS_LAMBDA_MEMORY | The amount of memory in MB for the Lambda function (128-1536, multiple of 64). Defaults to AWS default. |
 | lambdaHandlers |              | Sequence of Lambda names to handler functions (for multiple lambda methods per project). Overrides `lambdaName` and `handlerName` if present. | 
 | deployMethod | AWS_LAMBDA_DEPLOY_METHOD | The preferred method for uploading the jar, either `S3` for uploading to AWS S3 or `DIRECT` for direct upload to AWS Lambda |
