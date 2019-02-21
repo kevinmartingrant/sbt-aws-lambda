@@ -7,13 +7,23 @@ import scala.util.Try
 
 private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
 
+  def publishVersion(name: String, revisionId: String, version: String)
+  : Try[PublishVersionResult] = {
+    val request = new PublishVersionRequest()
+      .withFunctionName(name)
+      .withRevisionId(revisionId)
+      .withDescription(version)
+    client.publishVersion(request)
+  }
+
   def updateLambdaWithFunctionCodeRequest(updateFunctionCodeRequest: UpdateFunctionCodeRequest): Try[UpdateFunctionCodeResult] = {
     println(s"Updating lambda code ${updateFunctionCodeRequest.getFunctionName}")
-    client.updateFunctionCode(updateFunctionCodeRequest)
-      .map { result =>
-        println(s"Updated lambda code ${result.getFunctionArn}")
-        result
-      }
+    for {
+      updateResult <- client.updateFunctionCode(updateFunctionCodeRequest)
+      _ <- publishVersion(name = updateResult.getFunctionName, revisionId = updateResult.getRevisionId, version = updateResult.getVersion)
+    } yield {
+      updateResult
+    }
   }
 
   def tagLambda(functionArn: String, version: String) = {
@@ -61,11 +71,12 @@ private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
     request = vpcConfig.fold(request)(request.withVpcConfig)
     request = deadLetterName.fold(request)(d => request.withDeadLetterConfig(new DeadLetterConfig().withTargetArn(d.value)))
 
-    client.updateFunctionConfiguration(request)
-      .map { result =>
-        println(s"Updated lambda config ${result.getFunctionArn}")
-        result
-      }
+    for {
+      updateResult <- client.updateFunctionConfiguration(request)
+      _ <- publishVersion(name = updateResult.getFunctionName, revisionId = updateResult.getRevisionId, version = updateResult.getVersion)
+    } yield {
+      updateResult
+    }
   }
 
   def createLambda(functionName: LambdaName,
@@ -90,11 +101,11 @@ private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
     request = vpcConfig.fold(request)(request.withVpcConfig)
     request = deadLetterName.fold(request)(n => request.withDeadLetterConfig(new DeadLetterConfig().withTargetArn(n.value)))
 
-    client.createFunction(request)
-      .map { result =>
-        println(s"Created Lambda: ${result.getFunctionArn}")
-        result
-      }
-
+    for {
+      createResult <- client.createFunction(request)
+      _ <- publishVersion(name = createResult.getFunctionName, revisionId = createResult.getRevisionId, version = createResult.getVersion)
+    } yield {
+      createResult
+    }
   }
 }
