@@ -23,6 +23,9 @@ object AwsLambdaTests extends TestSuite {
       "adds version" - tagWithVersion
       "adds timestamp" - tagWithTimestamp
     }
+    "Publishes Version" - {
+      "publishes proper version" - publishVersion
+    }
     "Get lambda config" - {
       "gets proper function" - getWithFunctionName
       "gets some result" - getSuccess
@@ -177,7 +180,8 @@ object AwsLambdaTests extends TestSuite {
     memory,
     deadLetterArn,
     vpcConfig,
-    environment
+    environment,
+    ""
   )
 
   def updateWithFunctionName = {
@@ -351,7 +355,8 @@ object AwsLambdaTests extends TestSuite {
     deadLetterArn,
     vpcConfig,
     functionCode,
-    environment
+    environment,
+    ""
   )
 
   def createWithFunctionName = {
