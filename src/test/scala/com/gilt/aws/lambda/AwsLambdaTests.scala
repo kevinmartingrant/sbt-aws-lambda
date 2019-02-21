@@ -12,6 +12,8 @@ trait NotImplementedAwsLambdaWrapper extends wrapper.AwsLambda {
   def getFunctionConfiguration(req: GetFunctionConfigurationRequest): Try[GetFunctionConfigurationResult] = ???
   def updateFunctionConfiguration(req: UpdateFunctionConfigurationRequest): Try[UpdateFunctionConfigurationResult] = ???
   def tagResource(req: TagResourceRequest): Try[TagResourceResult] = ???
+  def publishVersion(
+      request: PublishVersionRequest): Try[PublishVersionResult] = ???
 }
 
 object AwsLambdaTests extends TestSuite {
@@ -72,16 +74,18 @@ object AwsLambdaTests extends TestSuite {
     new AwsLambda(client).tagLambda(arn, "")
   }
 
-  def tagWithVersion = {
-    val version = "my-version"
+  def publishVersion = {
+    val name = "my-name"
+    val revisionId = "my-revision-id"
     val client = new NotImplementedAwsLambdaWrapper {
-      override def tagResource(req: TagResourceRequest) = {
-        assert(req.getTags().asScala.get("deploy.code.version") == Some(version))
+      override def publishVersion(request: PublishVersionRequest) = {
+        assert(request.getFunctionName == name)
+        assert(request.getRevisionId == revisionId)
         Failure(new Throwable)
       }
     }
 
-    new AwsLambda(client).tagLambda("", version)
+    new AwsLambda(client).publishVersion(name, revisionId, "")
   }
 
   def tagWithTimestamp = {
@@ -93,6 +97,18 @@ object AwsLambdaTests extends TestSuite {
     }
 
     new AwsLambda(client).tagLambda("", "")
+  }
+
+  def tagWithVersion = {
+    val version = "my-version"
+    val client = new NotImplementedAwsLambdaWrapper {
+      override def tagResource(req: TagResourceRequest) = {
+        assert(req.getTags().asScala.get("deploy.code.version") == Some(version))
+        Failure(new Throwable)
+      }
+    }
+
+    new AwsLambda(client).tagLambda("", version)
   }
 
   def getWithFunctionName = {
