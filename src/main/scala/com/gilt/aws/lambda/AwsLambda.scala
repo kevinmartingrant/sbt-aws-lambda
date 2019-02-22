@@ -75,6 +75,7 @@ private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
 
     for {
       updateResult <- client.updateFunctionConfiguration(request)
+      _ = println(s"Updated lambda config ${updateResult.getFunctionArn}")
       _ <- publishVersion(name = updateResult.getFunctionName, revisionId = updateResult.getRevisionId, version = version)
     } yield {
       updateResult
@@ -106,6 +107,7 @@ private[lambda] class AwsLambda(client: wrapper.AwsLambda) {
 
     for {
       createResult <- client.createFunction(request)
+      _ = println(s"Create lambda ${createResult.getFunctionArn}")
       _ <- publishVersion(name = createResult.getFunctionName, revisionId = createResult.getRevisionId, version = version)
     } yield {
       createResult
