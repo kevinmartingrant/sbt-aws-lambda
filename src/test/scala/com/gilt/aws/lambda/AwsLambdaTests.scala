@@ -80,15 +80,17 @@ object AwsLambdaTests extends TestSuite {
   def publishVersion = {
     val name = "my-name"
     val revisionId = "my-revision-id"
+    val version = "version"
     val client = new NotImplementedAwsLambdaWrapper {
       override def publishVersion(request: PublishVersionRequest) = {
         assert(request.getFunctionName == name)
         assert(request.getRevisionId == revisionId)
+        assert(request.getDescription == version)
         Failure(new Throwable)
       }
     }
 
-    new AwsLambda(client).publishVersion(name, revisionId, "")
+    new AwsLambda(client).publishVersion(name, revisionId, version)
   }
 
   def tagWithTimestamp = {
